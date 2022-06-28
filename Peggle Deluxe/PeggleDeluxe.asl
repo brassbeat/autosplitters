@@ -11,7 +11,7 @@ state("popcapgame1", "Steam")
 {
   // Used for starting the game.
   // It always plays song 49 when you start a new adventure.
-  int song : "popcapgame1.exe", 0xFFD9FCD8; // static, non-pointer: 0x19FCD8 - 0x400000 + 0x100000000
+  int song : "popcapgame1.exe", 0xFFD9FCD8;
 
   // Level subindex, e.g. in 3-1 this evaluates to 1.
   // Bad pointer in menus, incl. between stages.
@@ -24,7 +24,7 @@ state("Peggle", "Portable")
 {
   // Used for starting the game.
   // It always plays song 49 when you start a new adventure.
-  int song : "Peggle.exe", 0xFFD9FCD8; // static, non-pointer: 0x19FCD8 - 0x400000 + 0x100000000
+  int song : "Peggle.exe", 0xFFD9FCD8;
 
   // Level subindex, e.g. in 3-1 this evaluates to 1.
   // Bad pointer in menus, incl. between stages.
@@ -45,6 +45,8 @@ startup
   
   settings.Add("usesSteam", true, "Use Steam version", "setVersionManually");
   settings.SetToolTip("usesSteam", "Uncheck if you are not launching the game through Steam.");
+  
+  // print("Peggle ASL: Active");
 }
 
 
@@ -57,21 +59,22 @@ init
     else {
       version = "Portable";
     }
-    print("Peggle ASL: Manually set version to \"" + version + "\"");
+    // print("Peggle ASL: Manually set version to \"" + version + "\"");
   }
   else {
-    var mms = modules.First().ModuleMemorySize;
+    var peggleModules = modules.Where(m => m.ModuleName == "Peggle.exe");
     
-    // This doesn't always display the correct version, but it seems to work
-    switch (mms) {
-        case 0x222000:
-          version = "Steam";
-          break;
-        default:
-          version = "Portable";
-          break;
+    if (peggleModules.Count() > 0 && peggleModules.First().ModuleMemorySize == 0x2f1000) {
+      version = "Portable";
     }
-    print("Peggle ASL: Found version \"" + version + "\"");
+    
+    var popcapgameModules = modules.Where(m => m.ModuleName == "popcapgame1.exe");
+    if (popcapgameModules.Count() > 0 && popcapgameModules.First().ModuleMemorySize == 0x2f1000) {
+      version = "Steam";
+    }
+    
+    
+    // print("Peggle ASL: Found version \"" + version + "\"");
   }
 }
 
@@ -80,6 +83,9 @@ init
   if (old.levelSub != current.levelSub) {
     print("Peggle ASL: levelSub " + old.levelSub + " -> " + current.levelSub);
   }
+  if (old.song != current.song) {
+    print("Peggle ASL: song " + old.song + " -> " + current.song);
+  }
 } */
 
 
@@ -87,7 +93,7 @@ start
 {
   // Check for levelSub is needed to prevent false positives in Quick Play.
   if (current.song == 49 && old.song != 49 && current.levelSub == 0) {
-    print("Peggle ASL: start");
+    // print("Peggle ASL: start");
     return true;
   }
   return false;
@@ -101,7 +107,7 @@ split
   {
     case -5: 
       // level x-5 -> introduction screen. 
-      // Split on every setting. if current.levelSub is 0
+      // Split on every setting if current.levelSub is 0
       if(current.levelSub == 0) {
           print("Peggle ASL: split (end of stage)");
           return true;
@@ -114,7 +120,7 @@ split
       // Split if not using Master splits and old.levelSub is not 0
       if (!settings["splitPerStage"]) {
         if (old.levelSub != 0) {
-          print("Peggle ASL: split (end of level)");
+          // print("Peggle ASL: split (end of level)");
           return true;
         }
         else {
