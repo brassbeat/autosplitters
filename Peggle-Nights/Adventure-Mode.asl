@@ -43,11 +43,12 @@ startup
     vars.targetNames.Add("wow", "PeggleWoW.exe");
 
     vars.targetSizes = new Dictionary<string, int>();
-    vars.targetSizes.Add("nights", 0x36d000);
+    vars.targetSizes.Add("nightsSteam", 0x36e000);
+    vars.targetSizes.Add("nightsPortable", 0x36d000);
     vars.targetSizes.Add("wow", 0x35c000);
 
     print("Peggle ASL: Active");
-  
+
 }
 
 init
@@ -55,20 +56,21 @@ init
     var popcapgameModules = modules.Where(m => m.ModuleName == "popcapgame1.exe");
 
     if (popcapgameModules.Count() > 0) {
-        int mms = popcapgameModules.First().ModuleMemorySize;
-        if (mms == vars.targetSizes["nights"]) {
+        // int mms = popcapgameModules.First().ModuleMemorySize;
+        // print("Peggle ASL: Memory Size = " + mms.ToString());
+        if (mms == vars.targetSizes["nightsSteam"]) {
             version = "nightsSteam";
         }
     }
 
     var nightsModules = modules.Where(m => m.ModuleName == vars.targetNames["nights"]);
 
-    if (nightsModules.Count() > 0 && nightsModules.First().ModuleMemorySize == vars.targetSizes["nights"]) {
+    if (nightsModules.Count() > 0 && nightsModules.First().ModuleMemorySize == vars.targetSizes["nightsPortable"]) {
         version = "nightsPortable";
     }
 
     var wowModules = modules.Where(m => m.ModuleName == vars.targetNames["wow"]);
-    
+
     if (wowModules.Count() > 0 && wowModules.First().ModuleMemorySize == vars.targetSizes["wow"]) {
         version = "wowPortable";
     }
@@ -90,8 +92,8 @@ split
     int levelDifference = current.levelSub - old.levelSub;
     switch (levelDifference)
     {
-        case -5: 
-            // level x-5 -> introduction screen. 
+        case -5:
+            // level x-5 -> introduction screen.
             // Split on every setting if current.levelSub is 0
             if(current.levelSub == 0) {
                 // print("Peggle ASL: split (end of stage)");
@@ -102,7 +104,7 @@ split
             }
 
         case 1:
-            // intro -> x-1 or next level. 
+            // intro -> x-1 or next level.
             // Split if not using Master splits and old.levelSub is not 0
             if (!settings["splitPerStage"]) {
                 if (old.levelSub != 0) {
