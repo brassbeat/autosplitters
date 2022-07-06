@@ -56,7 +56,7 @@ init
     var popcapgameModules = modules.Where(m => m.ModuleName == "popcapgame1.exe");
 
     if (popcapgameModules.Count() > 0) {
-        // int mms = popcapgameModules.First().ModuleMemorySize;
+        int mms = popcapgameModules.First().ModuleMemorySize;
         // print("Peggle ASL: Memory Size = " + mms.ToString());
         if (mms == vars.targetSizes["nightsSteam"]) {
             version = "nightsSteam";
