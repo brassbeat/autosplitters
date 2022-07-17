@@ -121,7 +121,7 @@ startup
     // settings.SetToolTip("trackAimTime", "Keep track of how long you spent aiming in Game Time");
 
     settings.Add("trackILTimes", false, "Track IL times");
-    settings.SetToolTip("trackILTimes", "List IL time after completing a level");
+    settings.SetToolTip("trackILTimes", "List IL time after completing a level. \n NOTE: this timing is not 100% accurate yet.");
 
     settings.Add("trackRetries", false, "Track retries");
 
@@ -148,6 +148,15 @@ startup
 			textSetting.GetType().GetProperty("Text2").SetValue(textSetting, text);
 	});
 
+    vars.FrontError = (Action<string>)((gameName) =>
+    {
+        string body = String.Format("Autosplitter attached to frontend for {},\n and will not run in this condition.\n Please ensure that the game window is loaded,\n then reopen your splits.", gameName);
+        string caption = "LiveSplit | Peggle Autosplitter";
+        MessageBoxButtons buttons = MessageBoxButtons.OK;
+        MessageBoxIcon icon = MessageBoxIcon.Error;
+        var message = MessageBox.Show(body, caption, buttons, icon);
+    });
+
     vars.targetNames = new Dictionary<string, string>();
     vars.targetNames.Add("steam", "popcapgame1.exe");
     vars.targetNames.Add("deluxe", "Peggle.exe");
@@ -155,6 +164,7 @@ startup
     vars.targetSizes = new Dictionary<string, int>();
     vars.targetSizes.Add("deluxe", 0x2f1000);
     vars.targetSizes.Add("extreme", 0x2f5000);
+    vars.targetSizes.Add("deluxeFront", 0x222000);
 
     vars.debugPrefix = "Peggle ASL:";
 
@@ -165,15 +175,21 @@ init
 {
     var deluxeModules = modules.Where(m => m.ModuleName == vars.targetNames["deluxe"]);
 
-    if (deluxeModules.Count() > 0 && deluxeModules.First().ModuleMemorySize == vars.targetSizes["deluxe"])
+    if (deluxeModules.Count() > 0)
     {
-        version = "deluxePortable";
+        int mms = deluxeModules.First().ModuleMemorySize;
+        print("deluxe: mms = " + mms.ToString());
+        if (mms == vars.targetSizes["deluxe"])
+        {
+            version = "deluxePortable";
+        }
     }
 
     var popcapgameModules = modules.Where(m => m.ModuleName == "popcapgame1.exe");
     if (popcapgameModules.Count() > 0)
     {
         int mms = popcapgameModules.First().ModuleMemorySize;
+        print("steam: mms = " + mms.ToString());
         if (mms == vars.targetSizes["deluxe"])
         {
             version = "deluxeSteam";
@@ -184,13 +200,14 @@ init
         }
     }
 
-    // print("Peggle ASL: Found version \"" + version + "\"");
+    print("Peggle ASL: Found version \"" + version + "\"");
 
     vars.wasNotRunning = true;
 
     vars.levelCompletionTarget = null;
     vars.ILStartTime = null;
-    vars.ILString = "[none]";
+    vars.ILOffset = new TimeSpan(0, 0, 0, 0, 500);
+    vars.ILString = "-";
 
     vars.retryCounter = null;
     vars.skipRetryIncrement = true;
@@ -245,14 +262,15 @@ update
             // print("Peggle ASL: Detected timer start");
             vars.retryCounter = 0;
             vars.totalAimTime = new TimeSpan(0);
-            vars.ILString = "[none]";
+            vars.ILString = "-";
             vars.skipRetryIncrement = true;
+            vars.levelCompletionTarget = current.levelsEnded + 1;
 
             if (settings["trackRetries"])
             {
                 vars.SetTextComponent("Retries", vars.retryCounter.ToString());
             }
-            if (settings["trackRetries"])
+            if (settings["trackILTimes"])
             {
                 vars.SetTextComponent("Last IL Time", vars.ILString);
             }
@@ -261,7 +279,7 @@ update
         }
 
         // start of level updates
-        if (current.levelsStarted != old.levelsStarted)
+        if ((current.levelState == 8) && (old.levelState != 8))
         {
             if (settings["trackRetries"])
             {
@@ -273,7 +291,10 @@ update
                 else
                 {
                     var retryTime = timer.CurrentTime.RealTime - vars.ILStartTime;
-                    if (!settings["ignoreQuickRetries"] || retryTime > vars.quickRetryTreshold)
+                    bool isQuickRetry = retryTime > vars.quickRetryTreshold;
+                    bool isDeath = (current.levelsEnded == vars.levelCompletionTarget);
+                    bool countRetry = (!settings["ignoreQuickRetries"] || !isQuickRetry) && !isDeath;
+                    if (countRetry)
                     {
                         // print("Peggle ASL: detected retry");
                         vars.retryCounter++;
@@ -297,12 +318,13 @@ update
         // end of level updates
         if (isEndOfLevelDialog && levelCompleted && levelEndedThisFrame)
         {
-            if (settings["trackILTimes"])
+            if (settings["trackILTimes"] && (vars.ILStartTime != null))
             {
-                vars.ILString = (timer.CurrentTime.RealTime - vars.ILStartTime).ToString().Substring(4,7);
+                vars.ILString = (timer.CurrentTime.RealTime - vars.ILStartTime + vars.ILOffset).ToString().Substring(4,7);
                 // print("Peggle ASL: Recorded IL time = " + vars.ILString);
                 vars.ILStartTime = null;
                 vars.SetTextComponent("Last IL Time", vars.ILString);
+                vars.skipRetryIncrement = true;
             }
         }
     }
