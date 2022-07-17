@@ -108,7 +108,7 @@ startup
     // settings.SetToolTip("trackAimTime", "Keep track of how long you spent aiming in Game Time");
 
     settings.Add("trackILTimes", false, "Track IL times");
-    settings.SetToolTip("trackILTimes", "List IL time after completing a level");
+    settings.SetToolTip("trackILTimes", "List IL time after completing a level. \n NOTE: this timing is not 100% accurate yet.");
 
     settings.Add("trackRetries", false, "Track retries");
 
@@ -144,6 +144,7 @@ startup
     vars.targetSizes.Add("nightsSteam", 0x36e000);
     vars.targetSizes.Add("nightsPortable", 0x36d000);
     vars.targetSizes.Add("wow", 0x35c000);
+    vars.targetSizes.Add("nightsFront", 0x233000);
 
     // print("Peggle ASL: Active");
 }
@@ -182,7 +183,8 @@ init
 
     vars.levelCompletionTarget = null;
     vars.ILStartTime = null;
-    vars.ILString = "[none]";
+    vars.ILOffset = new TimeSpan(0, 0, 0, 0, 500);
+    vars.ILString = "-";
 
     vars.retryCounter = null;
     vars.skipRetryIncrement = true;
@@ -237,14 +239,15 @@ update
             // print("Peggle ASL: Detected timer start");
             vars.retryCounter = 0;
             vars.totalAimTime = new TimeSpan(0);
-            vars.ILString = "[none]";
+            vars.ILString = "-";
             vars.skipRetryIncrement = true;
+            vars.levelCompletionTarget = current.levelsEnded + 1;
 
             if (settings["trackRetries"])
             {
                 vars.SetTextComponent("Retries", vars.retryCounter.ToString());
             }
-            if (settings["trackRetries"])
+            if (settings["trackILTimes"])
             {
                 vars.SetTextComponent("Last IL Time", vars.ILString);
             }
@@ -253,7 +256,7 @@ update
         }
 
         // start of level updates
-        if (current.levelsStarted != old.levelsStarted)
+        if ((current.levelState == 8) && (old.levelState != 8))
         {
             if (settings["trackRetries"])
             {
@@ -265,7 +268,10 @@ update
                 else
                 {
                     var retryTime = timer.CurrentTime.RealTime - vars.ILStartTime;
-                    if (!settings["ignoreQuickRetries"] || retryTime > vars.quickRetryTreshold)
+                    bool isQuickRetry = retryTime > vars.quickRetryTreshold;
+                    bool isDeath = (current.levelsEnded == vars.levelCompletionTarget);
+                    bool countRetry = (!settings["ignoreQuickRetries"] || !isQuickRetry) && !isDeath;
+                    if (countRetry)
                     {
                         // print("Peggle ASL: detected retry");
                         vars.retryCounter++;
@@ -289,12 +295,13 @@ update
         // end of level updates
         if (isEndOfLevelDialog && levelCompleted && levelEndedThisFrame)
         {
-            if (settings["trackILTimes"])
+            if (settings["trackILTimes"] && (vars.ILStartTime != null))
             {
-                vars.ILString = (timer.CurrentTime.RealTime - vars.ILStartTime).ToString().Substring(4,7);
+                vars.ILString = (timer.CurrentTime.RealTime - vars.ILStartTime + vars.ILOffset).ToString().Substring(4,7);
                 // print("Peggle ASL: Recorded IL time = " + vars.ILString);
                 vars.ILStartTime = null;
                 vars.SetTextComponent("Last IL Time", vars.ILString);
+                vars.skipRetryIncrement = true;
             }
         }
     }
@@ -335,7 +342,8 @@ split
                     return false;
                 }
             }
-            else {
+            else
+            {
                 return false;
             }
     default:
