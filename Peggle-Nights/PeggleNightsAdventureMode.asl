@@ -269,9 +269,7 @@ update
                 {
                     var retryTime = timer.CurrentTime.RealTime - vars.ILStartTime;
                     bool isQuickRetry = retryTime > vars.quickRetryTreshold;
-                    bool isDeath = (current.levelsEnded == vars.levelCompletionTarget);
-                    bool countRetry = (!settings["ignoreQuickRetries"] || !isQuickRetry) && !isDeath;
-                    if (countRetry)
+                    if (!settings["ignoreQuickRetries"] || !isQuickRetry)
                     {
                         // print("Peggle ASL: detected retry");
                         vars.retryCounter++;
