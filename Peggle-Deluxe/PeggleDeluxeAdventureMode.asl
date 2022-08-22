@@ -291,7 +291,7 @@ update
                 else
                 {
                     var retryTime = timer.CurrentTime.RealTime - vars.ILStartTime;
-                    bool isQuickRetry = retryTime > vars.quickRetryTreshold;
+                    bool isQuickRetry = retryTime < vars.quickRetryTreshold;
                     if (!settings["ignoreQuickRetries"] || !isQuickRetry)
                     {
                         // print("Peggle ASL: detected retry");
