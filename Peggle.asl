@@ -55,6 +55,11 @@ state("popcapgame1", "deluxeSteam")
 
     // Used to determine whether a level has been won.
     string16 endDialogHeader : "popcapgame1.exe", 0x00286768, 0x7b8, 0x160, 0xa4;
+
+    // Level subindex, e.g. in 3-1 this evaluates to 1.
+    // Bad pointer in menus, incl. between stages.
+    // ASL treats this as 0, which is extremely convenient :)
+    int levelSub : "popcapgame1.exe", 0x00286768, 0x7B8, 0x14c, 0x90;
 }
 
 state("popcapgame1", "nightsSteam")
@@ -70,6 +75,7 @@ state("popcapgame1", "nightsSteam")
     int displayedScore : "popcapgame1.exe", 0x002cbe04, 0x864, 0x718, 0xac;
     int phaseTimer : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x8;
     string16 endDialogHeader : "popcapgame1.exe", 0x002cbe04, 0x864, 0x72c, 0xa4;
+    int levelSub : "popcapgame1.exe", 0x002cbe04, 0x864, 0x718, 0xa8;
 }
 
 state("popcapgame1", "extremeSteam")
@@ -85,6 +91,7 @@ state("popcapgame1", "extremeSteam")
     int displayedScore : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x14c, 0x94;
     int phaseTimer : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x154, 0x8;
     string16 endDialogHeader : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x160, 0xa4;
+    int levelSub : "popcapgame1.exe", 0x0028A808, 0x7B8, 0x14c, 0x90;
 }
 
 state("Peggle", "deluxePortable")
@@ -100,6 +107,7 @@ state("Peggle", "deluxePortable")
     int displayedScore : "Peggle.exe", 0x00286768, 0x7b8, 0x14c, 0x94;
     int phaseTimer : "Peggle.exe", 0x00286768, 0x7b8, 0x154, 0x8;
     string16 endDialogHeader : "Peggle.exe", 0x00286768, 0x7b8, 0x160, 0xa4;
+    int levelSub : "Peggle.exe", 0x00286768, 0x7B8, 0x14c, 0x90;
 }
 
 state("PeggleNights", "nightsPortable")
@@ -115,6 +123,7 @@ state("PeggleNights", "nightsPortable")
     int displayedScore : "PeggleNights.exe", 0x002cae04, 0x864, 0x718, 0xac;
     int phaseTimer : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x8;
     string16 endDialogHeader : "PeggleNights.exe", 0x002cae04, 0x864, 0x72c, 0xa4;
+    int levelSub : "PeggleNights.exe", 0x002cae04, 0x864, 0x718, 0xa8;
 }
 
 state("PeggleWoW", "wowPortable")
@@ -130,6 +139,7 @@ state("PeggleWoW", "wowPortable")
     int displayedScore : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x718, 0xac;
     int phaseTimer : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x8;
     string16 endDialogHeader : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x72c, 0xa4;
+    int levelSub : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x718, 0xa8;
 }
 
 startup
@@ -320,14 +330,45 @@ start
 
 split
 {
-    // We're only interested in level exits
-    if ((current.gameMode != 1)
-        || (old.boardState != 5)
-        || (current.boardState == 5))
+    if(current.gameMode != 1)
     {
         return false;
     }
-
-    return (!settings["splitPerStage"] || (current.levelIndex == 0))
-           && vars.IsVictory(old.endDialogHeader);
+    int levelDifference = current.levelSub - old.levelSub;
+    switch (levelDifference)
+    {
+        case -5:
+            // level x-5 -> introduction screen.
+            // Split on every setting if current.levelSub is 0
+            if((current.levelSub == 0) && (current.mainMenuBase == 0))
+            {
+                // print("Peggle ASL: split (end of stage)");
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        case 1:
+            // intro -> x-1 or next level.
+            // Split if not using Master splits and old.levelSub is not 0
+            if (!settings["splitPerStage"])
+            {
+                if (old.levelSub != 0)
+                {
+                    // print("Peggle ASL: split (end of level)");
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+    default:
+        return false;
+  }
 }
