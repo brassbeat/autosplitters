@@ -56,10 +56,18 @@ state("popcapgame1", "deluxeSteam")
     // Used to determine whether a level has been won.
     string16 endDialogHeader : "popcapgame1.exe", 0x00286768, 0x7b8, 0x160, 0xa4;
 
+    // How far you're in a multilevel challenge
+    int multilevelIndex : "Peggle.exe", 0x00286768, 0x7b8, 0xf0;
+
     // Level subindex, e.g. in 3-1 this evaluates to 1.
     // Bad pointer in menus, incl. between stages.
     // ASL treats this as 0, which is extremely convenient :)
     int levelSub : "popcapgame1.exe", 0x00286768, 0x7B8, 0x14c, 0x90;
+
+    // Used to determine end state of level in IL mode.
+    int opponentScore : "popcapgame1.exe", 0x00286768, 0x7b8, 0x154, 0x178;
+    int orangePegsLeft : "popcapgame1.exe", 0x00286768, 0x7b8, 0x154, 0x360;
+    int clearage : "popcapgame1.exe", 0x00286768, 0x7b8, 0x160, 0x23c;
 }
 
 state("popcapgame1", "nightsSteam")
@@ -75,7 +83,11 @@ state("popcapgame1", "nightsSteam")
     int displayedScore : "popcapgame1.exe", 0x002cbe04, 0x864, 0x718, 0xac;
     int phaseTimer : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x8;
     string16 endDialogHeader : "popcapgame1.exe", 0x002cbe04, 0x864, 0x72c, 0xa4;
+    int multilevelIndex : "popcapgame1.exe", 0x002cbe04, 0x864, 0x10c;
     int levelSub : "popcapgame1.exe", 0x002cbe04, 0x864, 0x718, 0xa8;
+    int opponentScore : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x204;
+    int orangePegsLeft : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x414;
+    int clearage : "popcapgame1.exe", 0x002cbe04, 0x864, 0x72c, 0x224;
 }
 
 state("popcapgame1", "extremeSteam")
@@ -91,7 +103,11 @@ state("popcapgame1", "extremeSteam")
     int displayedScore : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x14c, 0x94;
     int phaseTimer : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x154, 0x8;
     string16 endDialogHeader : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x160, 0xa4;
+    int multilevelIndex : "Peggle.exe", 0x0028a808, 0x7b8, 0xf0;
     int levelSub : "popcapgame1.exe", 0x0028A808, 0x7B8, 0x14c, 0x90;
+    int opponentScore : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x154, 0x178;
+    int orangePegsLeft : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x154, 0x360;
+    int clearage : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x160, 0x23c;
 }
 
 state("Peggle", "deluxePortable")
@@ -107,7 +123,11 @@ state("Peggle", "deluxePortable")
     int displayedScore : "Peggle.exe", 0x00286768, 0x7b8, 0x14c, 0x94;
     int phaseTimer : "Peggle.exe", 0x00286768, 0x7b8, 0x154, 0x8;
     string16 endDialogHeader : "Peggle.exe", 0x00286768, 0x7b8, 0x160, 0xa4;
+    int multilevelIndex : "Peggle.exe", 0x00286768, 0x7b8, 0xf0;
     int levelSub : "Peggle.exe", 0x00286768, 0x7B8, 0x14c, 0x90;
+    int opponentScore : "Peggle.exe", 0x00286768, 0x7b8, 0x154, 0x178;
+    int orangePegsLeft : "Peggle.exe", 0x00286768, 0x7b8, 0x154, 0x360;
+    int clearage : "Peggle.exe", 0x00286768, 0x7b8, 0x160, 0x23c;
 }
 
 state("PeggleNights", "nightsPortable")
@@ -123,7 +143,11 @@ state("PeggleNights", "nightsPortable")
     int displayedScore : "PeggleNights.exe", 0x002cae04, 0x864, 0x718, 0xac;
     int phaseTimer : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x8;
     string16 endDialogHeader : "PeggleNights.exe", 0x002cae04, 0x864, 0x72c, 0xa4;
+    int multilevelIndex : "PeggleNights.exe", 0x002cae04, 0x864, 0x10c;
     int levelSub : "PeggleNights.exe", 0x002cae04, 0x864, 0x718, 0xa8;
+    int opponentScore : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x204;
+    int orangePegsLeft : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x414;
+    int clearage : "PeggleNights.exe", 0x002cae04, 0x864, 0x72c, 0x224;
 }
 
 state("PeggleWoW", "wowPortable")
@@ -139,21 +163,44 @@ state("PeggleWoW", "wowPortable")
     int displayedScore : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x718, 0xac;
     int phaseTimer : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x8;
     string16 endDialogHeader : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x72c, 0xa4;
+    int multilevelIndex : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x10c;
     int levelSub : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x718, 0xa8;
+    int opponentScore : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x204;
+    int orangePegsLeft : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x414;
+    int clearage : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x72c, 0x224;
 }
 
 startup
 {
+    settings.Add("RTAMode", true,  "Full game mode");
+
     // Allow splits per level or splits per stage.
-    settings.Add("splitPerStage", false, "Master splits");
+    settings.Add("splitPerStage", false, "Master splits", "RTAMode");
     settings.SetToolTip("splitPerStage", "Split once per set of five levels (instead of once per level)");
 
-    settings.Add("trackILTimes", false, "Track IL times");
-    settings.SetToolTip("trackILTimes", "List IL time after completing a level");
+    settings.Add("trackILTimes", false, "Track IL times", "RTAMode");
+    settings.SetToolTip("trackILTimes", "This lists the IL time in a text element");
 
-    settings.Add("trackRetries", false, "Track retries");
+    settings.Add("trackRetries", false, "Track retries", "RTAMode");
 
     settings.Add("ignoreQuickRetries", true, "Ignore retries within 20 seconds", "trackRetries");
+
+
+    settings.Add("ilMode", false, "IL mode (pick one below)");
+    settings.SetToolTip(
+        "ilMode",
+        "Makes the game split on completing an IL. Auto-reset also only works in this mode"
+    );
+
+    settings.Add("ilModeClear", true, "Level completed", "ilMode");
+    settings.Add("ilModeFullClear", false, "Level full cleared", "ilMode");
+    settings.Add("ilModeDeath", false, "Level failed", "ilMode");
+    settings.Add("ilModeChallenge", false, "Challenge completed", "ilMode");
+    settings.Add("MultilevelSubsplits", false, "Multilevel splits", "ilModeChallenge");
+    settings.SetToolTip("MultilevelSubsplits", "Split for every level in a multilevel challenge");
+
+    settings.Add("trackFevorTimes", false, "Track FEVOR");
+    settings.SetToolTip("trackFevorTimes", "This is bonus, make sure you pick a mode above.");
 
     // constants
     vars.versions = new string[] {
@@ -189,46 +236,78 @@ startup
     // actual variables
     vars.retryCounter = 0;
     vars.startOfIL = (TimeSpan?)null;
+    vars.startOfFevor = (TimeSpan?)null;
 }
 
 init
 {
     // LiveSplit display by @zment (from Defy Gravity auto-splitter)
-	vars.SetTextComponent = (Action<string, string>)((id, text) =>
-	{
-		var textSettings = timer.Layout.Components.Where(x => x.GetType().Name == "TextComponent").Select(x => x.GetType().GetProperty("Settings").GetValue(x, null));
-		var textSetting = textSettings.FirstOrDefault(x => (x.GetType().GetProperty("Text1").GetValue(x, null) as string) == id);
-		if (textSetting == null)
-		{
-			var textComponentAssembly = Assembly.LoadFrom("Components\\LiveSplit.Text.dll");
-			var textComponent = Activator.CreateInstance(textComponentAssembly.GetType("LiveSplit.UI.Components.TextComponent"), timer);
-			timer.Layout.LayoutComponents.Add(new LiveSplit.UI.Components.LayoutComponent("LiveSplit.Text.dll", textComponent as LiveSplit.UI.Components.IComponent));
+    vars.SetTextComponent = (Action<string, string>)((id, text) =>
+    {
+        var textSettings = timer.Layout.Components.Where(x => x.GetType().Name == "TextComponent").Select(x => x.GetType().GetProperty("Settings").GetValue(x, null));
+        var textSetting = textSettings.FirstOrDefault(x => (x.GetType().GetProperty("Text1").GetValue(x, null) as string) == id);
+        if (textSetting == null)
+        {
+            var textComponentAssembly = Assembly.LoadFrom("Components\\LiveSplit.Text.dll");
+            var textComponent = Activator.CreateInstance(textComponentAssembly.GetType("LiveSplit.UI.Components.TextComponent"), timer);
+            timer.Layout.LayoutComponents.Add(new LiveSplit.UI.Components.LayoutComponent("LiveSplit.Text.dll", textComponent as LiveSplit.UI.Components.IComponent));
 
-			textSetting = textComponent.GetType().GetProperty("Settings", BindingFlags.Instance | BindingFlags.Public).GetValue(textComponent, null);
-			textSetting.GetType().GetProperty("Text1").SetValue(textSetting, id);
-		}
+            textSetting = textComponent.GetType().GetProperty("Settings", BindingFlags.Instance | BindingFlags.Public).GetValue(textComponent, null);
+            textSetting.GetType().GetProperty("Text1").SetValue(textSetting, id);
+        }
 
-		if (textSetting != null)
-			textSetting.GetType().GetProperty("Text2").SetValue(textSetting, text);
-	});
+        if (textSetting != null)
+            textSetting.GetType().GetProperty("Text2").SetValue(textSetting, text);
+    });
 
     // vars.DebugPrint = (Action<string>)((msg) => print("[Peggle ASL] " + msg));
 
-    vars.SetILTime = (Action<TimeSpan?>)((start) =>
+    vars.SetAuxiliaryTimer = (Action<string, TimeSpan?>)((textComponentName, start) =>
     {
-        const string TextComponentName = "Last IL Time";
         const string NullILString = "-";
         if (start.HasValue)
         {
             var ILTime = timer.CurrentTime.RealTime - start.Value; // + vars.ILOffset;
             string ILString = ILTime.ToString().Substring(4,7);
             // vars.DebugPrint("Recorded IL time = " + ILString);
-            vars.SetTextComponent(TextComponentName, ILString);
+            vars.SetTextComponent(textComponentName, ILString);
         }
         else
         {
             // vars.DebugPrint("Did not record IL time");
-            vars.SetTextComponent(TextComponentName, NullILString);
+            vars.SetTextComponent(textComponentName, NullILString);
+        }
+    });
+
+    vars.IsEndOfIL = (Func<bool>)(() =>
+    {
+        if (settings["ilModeFullClear"])
+        {
+            return current.clearage == 100;
+        }
+
+        if (settings["ilModeDeath"])
+        {
+            return true;
+        }
+
+        if (settings["ilModeClear"])
+        {
+            return current.orangePegsLeft == 0;
+        }
+
+        // We're in ilModeChallenge here
+        switch ((string)current.endDialogHeader)
+        {
+            case "Results":
+                return (current.internalScore > current.opponentScore);
+            case "Level Passed!":
+            case "Level Done":
+                return false; //
+            case "Way to Go!":
+                return true;
+            default:
+                return current.orangePegsLeft == 0;
         }
     });
 
@@ -242,7 +321,13 @@ init
         if (settings["trackILTimes"])
         {
             vars.startOfIL = null;
-            vars.SetILTime(null);
+            vars.SetAuxiliaryTimer("Last IL Time", null);
+        }
+
+        if (settings["trackFevorTimes"])
+        {
+            vars.startOfFevor = null;
+            vars.SetAuxiliaryTimer("Last FEVOR", null);
         }
         if (settings["trackRetries"])
         {
@@ -270,6 +355,11 @@ init
 
 update
 {
+    if (!(settings["trackILTimes"] || settings["trackRetries"] || settings["trackFevorTimes"]))
+    {
+        return true;
+    }
+
     // start of level updates
     if ((current.boardState == 8)
         && ((old.boardState != 8) || (current.levelTimer < old.levelTimer))
@@ -293,8 +383,14 @@ update
         vars.startOfIL = startTime;
     }
 
+    // start FEVOR
+    if ((current.orangePegsLeft == 0) && (old.orangePegsLeft > 0))
+    {
+        vars.startOfFevor = timer.CurrentTime.RealTime;
+    }
+
     // end IL
-    if ((vars.startOfIL != null)
+    if (((vars.startOfIL != null) || (vars.startOfFevor != null))
         && (current.boardState == 5)
         && (old.internalScore == old.displayedScore)
         && (current.phaseTimer > old.phaseTimer))
@@ -302,9 +398,18 @@ update
         bool isVictory = vars.IsVictory(old.endDialogHeader);
         // vars.DebugPrint("isVictory: " + isVictory.ToString());
 
-        if (isVictory)
+        if (!isVictory)
         {
-            vars.SetILTime(vars.startOfIL);
+            return true;
+        }
+        if (settings["trackILTimes"])
+        {
+            vars.SetAuxiliaryTimer("Last IL Time", vars.startOfIL);
+            vars.startOfIL = null;
+        }
+        if (settings["trackFevorTimes"])
+        {
+            vars.SetAuxiliaryTimer("Last FEVOR", vars.startOfFevor);
             vars.startOfIL = null;
         }
     }
@@ -318,6 +423,11 @@ onStart
 
 start
 {
+    if (settings["ilMode"])
+    {
+        return (current.boardState == 8)
+               && ((old.boardState != 8) || (current.levelTimer == 0));
+    }
     if (Array.IndexOf(vars.deluxeBaseVersions, version) >= 0)
     {
         return (current.song == 49) && (old.song != 49) && (current.gameMode == 1);
@@ -328,8 +438,29 @@ start
     }
 }
 
+reset
+{
+    if (!settings["ilMode"])
+    {
+        return false;
+    }
+    return (current.levelBase == 0) || ((current.levelTimer < old.levelTimer) && (current.multilevelIndex == 0));
+}
+
 split
 {
+    if (settings["ilMode"])
+    {
+        if (settings["MultilevelSubsplits"] && (current.multilevelIndex > old.multilevelIndex))
+        {
+            return true;
+        }
+        return (current.boardState == 5)
+               && (old.internalScore == old.displayedScore)
+               && (current.phaseTimer > old.phaseTimer)
+               && vars.IsEndOfIL();
+    }
+
     if(current.gameMode != 1)
     {
         return false;
@@ -342,33 +473,25 @@ split
             // Split on every setting if current.levelSub is 0
             if((current.levelSub == 0) && (current.mainMenuBase == 0))
             {
-                // print("Peggle ASL: split (end of stage)");
+                // vars.DebugPrint("Split (end of stage)");
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         case 1:
             // intro -> x-1 or next level.
             // Split if not using Master splits and old.levelSub is not 0
-            if (!settings["splitPerStage"])
-            {
-                if (old.levelSub != 0)
-                {
-                    // print("Peggle ASL: split (end of level)");
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
+            if (settings["splitPerStage"])
             {
                 return false;
             }
-    default:
-        return false;
-  }
+
+            if (old.levelSub != 0)
+            {
+                // vars.DebugPrint("Split (end of level)");
+                return true;
+            }
+            return false;
+        default:
+            return false;
+    }
 }
