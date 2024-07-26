@@ -410,7 +410,7 @@ update
         if (settings["trackFevorTimes"])
         {
             vars.SetAuxiliaryTimer("Last FEVOR", vars.startOfFevor);
-            vars.startOfIL = null;
+            vars.startOfFevor = null;
         }
     }
 }
