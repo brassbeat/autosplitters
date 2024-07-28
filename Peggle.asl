@@ -380,7 +380,11 @@ update
                 vars.SetTextComponent("Retries", vars.retryCounter.ToString());
             }
         }
-        vars.startOfIL = startTime;
+        
+        if (settings["trackILTimes"])
+        {
+            vars.startOfIL = startTime;
+        }
     }
 
     // start FEVOR
