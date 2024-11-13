@@ -68,6 +68,9 @@ state("popcapgame1", "deluxeSteam")
     int opponentScore : "popcapgame1.exe", 0x00286768, 0x7b8, 0x154, 0x178;
     int orangePegsLeft : "popcapgame1.exe", 0x00286768, 0x7b8, 0x154, 0x360;
     int clearage : "popcapgame1.exe", 0x00286768, 0x7b8, 0x160, 0x23c;
+    
+    // Used to prevent double-splitting in quick play
+    int levelsEnded : "popcapgame1.exe", 0x00286768, 0x85c, 0x198;
 }
 
 state("popcapgame1", "nightsSteam")
@@ -88,6 +91,7 @@ state("popcapgame1", "nightsSteam")
     int opponentScore : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x204;
     int orangePegsLeft : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x414;
     int clearage : "popcapgame1.exe", 0x002cbe04, 0x864, 0x72c, 0x224;
+    int levelsEnded : "popcapgame1.exe", 0x002cbe04, 0x914, 0x198;
 }
 
 state("popcapgame1", "extremeSteam")
@@ -108,6 +112,7 @@ state("popcapgame1", "extremeSteam")
     int opponentScore : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x154, 0x178;
     int orangePegsLeft : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x154, 0x360;
     int clearage : "popcapgame1.exe", 0x0028a808, 0x7b8, 0x160, 0x23c;
+    int levelsEnded : "popcapgame1.exe", 0x0028a808, 0x85c, 0x198;
 }
 
 state("Peggle", "deluxePortable")
@@ -128,6 +133,7 @@ state("Peggle", "deluxePortable")
     int opponentScore : "Peggle.exe", 0x00286768, 0x7b8, 0x154, 0x178;
     int orangePegsLeft : "Peggle.exe", 0x00286768, 0x7b8, 0x154, 0x360;
     int clearage : "Peggle.exe", 0x00286768, 0x7b8, 0x160, 0x23c;
+    int levelsEnded : "Peggle.exe", 0x00286768, 0x85c, 0x198;
 }
 
 state("PeggleNights", "nightsPortable")
@@ -148,6 +154,7 @@ state("PeggleNights", "nightsPortable")
     int opponentScore : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x204;
     int orangePegsLeft : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x414;
     int clearage : "PeggleNights.exe", 0x002cae04, 0x864, 0x72c, 0x224;
+    int levelsEnded : "PeggleNights.exe", 0x002cae04, 0x914, 0x198;
 }
 
 state("PeggleWoW", "wowPortable")
@@ -168,6 +175,7 @@ state("PeggleWoW", "wowPortable")
     int opponentScore : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x204;
     int orangePegsLeft : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x414;
     int clearage : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x72c, 0x224;
+    int levelsEnded : "PeggleWoW.exe", 0x002cbe04, 0x914, 0x198;
 }
 
 startup
@@ -184,19 +192,21 @@ startup
     settings.Add("trackRetries", false, "Track retries", "RTAMode");
 
     settings.Add("ignoreQuickRetries", true, "Ignore retries within 20 seconds", "trackRetries");
+    
+    settings.Add("LPMode", false, "Level Pack Mode");
 
 
-    settings.Add("ilMode", false, "IL mode (pick one below)");
+    settings.Add("ILMode", false, "IL mode (pick one below)");
     settings.SetToolTip(
-        "ilMode",
+        "ILMode",
         "Makes the game split on completing an IL. Auto-reset also only works in this mode"
     );
 
-    settings.Add("ilModeClear", true, "Level completed", "ilMode");
-    settings.Add("ilModeFullClear", false, "Level full cleared", "ilMode");
-    settings.Add("ilModeDeath", false, "Level failed", "ilMode");
-    settings.Add("ilModeChallenge", false, "Challenge completed", "ilMode");
-    settings.Add("MultilevelSubsplits", false, "Multilevel splits", "ilModeChallenge");
+    settings.Add("ILModeClear", true, "Level completed", "ILMode");
+    settings.Add("ILModeFullClear", false, "Level full cleared", "ILMode");
+    settings.Add("ILModeDeath", false, "Level failed", "ILMode");
+    settings.Add("ILModeChallenge", false, "Challenge completed", "ILMode");
+    settings.Add("MultilevelSubsplits", false, "Multilevel splits", "ILModeChallenge");
     settings.SetToolTip("MultilevelSubsplits", "Split for every level in a multilevel challenge");
 
     settings.Add("trackFevorTimes", false, "Track FEVOR");
@@ -237,6 +247,8 @@ startup
     vars.retryCounter = 0;
     vars.startOfIL = (TimeSpan?)null;
     vars.startOfFevor = (TimeSpan?)null;
+    vars.targetLevelsEnded = (int?)null;
+    vars.isEndOfNightsChallenge = false;
 }
 
 init
@@ -278,31 +290,38 @@ init
             vars.SetTextComponent(textComponentName, NullILString);
         }
     });
+    
+    vars.SetTargetLevelsEnded = (Action)(() =>
+    {
+        vars.targetLevelsEnded = current.levelsEnded + 1;
+    });
 
     vars.IsEndOfIL = (Func<bool>)(() =>
     {
-        if (settings["ilModeFullClear"])
+        if (settings["ILModeFullClear"])
         {
             return current.clearage == 100;
         }
 
-        if (settings["ilModeDeath"])
+        if (settings["ILModeDeath"])
         {
             return true;
         }
 
-        if (settings["ilModeClear"])
+        if (settings["ILModeClear"] || (settings["LPMode"] && (current.gameMode == 2)))
         {
             return current.orangePegsLeft == 0;
         }
 
-        // We're in ilModeChallenge here
+        // We're in ILModeChallenge here
         switch ((string)current.endDialogHeader)
+        
         {
             case "Results":
                 return (current.internalScore > current.opponentScore);
             case "Level Passed!":
             case "Level Done":
+            case "Try Again!":
                 return false; //
             case "Way to Go!":
                 return true;
@@ -380,7 +399,6 @@ update
                 vars.SetTextComponent("Retries", vars.retryCounter.ToString());
             }
         }
-        
         if (settings["trackILTimes"])
         {
             vars.startOfIL = startTime;
@@ -422,12 +440,16 @@ update
 onStart
 {
     vars.ResetDisplay();
+    if (settings["LPMode"])
+    {
+        vars.SetTargetLevelsEnded();
+    }
 }
 
 
 start
 {
-    if (settings["ilMode"])
+    if (settings["ILMode"] || settings["LPMode"])
     {
         return (current.boardState == 8)
                && ((old.boardState != 8) || (current.levelTimer == 0));
@@ -444,17 +466,46 @@ start
 
 reset
 {
-    if (!settings["ilMode"])
+    if (!settings["ILMode"])
     {
         return false;
     }
     return (current.levelBase == 0) || ((current.levelTimer < old.levelTimer) && (current.multilevelIndex == 0));
 }
 
+onSplit
+{
+    if (settings["LPMode"])
+    {
+        vars.SetTargetLevelsEnded();
+    }
+}
+
 split
 {
-    if (settings["ilMode"])
+    if (settings["ILModeChallenge"] || (settings["LPMode"] && (current.gameMode == 4)))
     {
+        
+        if (vars.isEndOfNightsChallenge && (current.levelBase < old.levelBase))
+        {
+            vars.isEndOfNightsChallenge = false;
+            return true;
+        }
+        
+        if ((current.boardState == 5) && (old.internalScore == old.displayedScore))
+        {
+            current.isEndOfNightsChallenge = (current.phaseTimer == old.phaseTimer);
+            return (!old.isEndOfNightsChallenge && current.isEndOfNightsChallenge);
+        }
+        
+    }
+    
+    if (settings["ILMode"] || settings["LPMode"])
+    {
+        if (settings["LPMode"] && (current.levelsEnded != vars.targetLevelsEnded))
+        {
+            return false;
+        }
         if (settings["MultilevelSubsplits"] && (current.multilevelIndex > old.multilevelIndex))
         {
             return true;
@@ -469,32 +520,18 @@ split
     {
         return false;
     }
+    
     int levelDifference = current.levelSub - old.levelSub;
     switch (levelDifference)
     {
         case -5:
             // level x-5 -> introduction screen.
             // Split on every setting if current.levelSub is 0
-            if((current.levelSub == 0) && (current.mainMenuBase == 0))
-            {
-                // vars.DebugPrint("Split (end of stage)");
-                return true;
-            }
-            return false;
+             return ((current.levelSub == 0) && (current.mainMenuBase == 0));
         case 1:
             // intro -> x-1 or next level.
             // Split if not using Master splits and old.levelSub is not 0
-            if (settings["splitPerStage"])
-            {
-                return false;
-            }
-
-            if (old.levelSub != 0)
-            {
-                // vars.DebugPrint("Split (end of level)");
-                return true;
-            }
-            return false;
+            return (!(settings["splitPerStage"]) && (old.levelSub != 0));
         default:
             return false;
     }
