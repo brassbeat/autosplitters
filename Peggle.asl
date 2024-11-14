@@ -290,11 +290,6 @@ init
             vars.SetTextComponent(textComponentName, NullILString);
         }
     });
-    
-    vars.SetTargetLevelsEnded = (Action)(() =>
-    {
-        vars.targetLevelsEnded = current.levelsEnded + 1;
-    });
 
     vars.IsEndOfIL = (Func<bool>)(() =>
     {
@@ -442,7 +437,7 @@ onStart
     vars.ResetDisplay();
     if (settings["LPMode"])
     {
-        vars.SetTargetLevelsEnded();
+        vars.targetLevelsEnded = current.levelsEnded + 1;
     }
 }
 
@@ -477,7 +472,7 @@ onSplit
 {
     if (settings["LPMode"])
     {
-        vars.SetTargetLevelsEnded();
+        vars.targetLevelsEnded = current.levelsEnded + 1;
     }
 }
 
