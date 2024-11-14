@@ -90,7 +90,7 @@ state("popcapgame1", "nightsSteam")
     int levelSub : "popcapgame1.exe", 0x002cbe04, 0x864, 0x718, 0xa8;
     int opponentScore : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x204;
     int orangePegsLeft : "popcapgame1.exe", 0x002cbe04, 0x864, 0x720, 0x414;
-    int clearage : "popcapgame1.exe", 0x002cbe04, 0x864, 0x72c, 0x224;
+    int clearage : "popcapgame1.exe", 0x002cbe04, 0x864, 0x72c, 0x244;
     int levelsEnded : "popcapgame1.exe", 0x002cbe04, 0x914, 0x198;
 }
 
@@ -153,7 +153,7 @@ state("PeggleNights", "nightsPortable")
     int levelSub : "PeggleNights.exe", 0x002cae04, 0x864, 0x718, 0xa8;
     int opponentScore : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x204;
     int orangePegsLeft : "PeggleNights.exe", 0x002cae04, 0x864, 0x720, 0x414;
-    int clearage : "PeggleNights.exe", 0x002cae04, 0x864, 0x72c, 0x224;
+    int clearage : "PeggleNights.exe", 0x002cae04, 0x864, 0x72c, 0x244;
     int levelsEnded : "PeggleNights.exe", 0x002cae04, 0x914, 0x198;
 }
 
@@ -174,7 +174,7 @@ state("PeggleWoW", "wowPortable")
     int levelSub : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x718, 0xa8;
     int opponentScore : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x204;
     int orangePegsLeft : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x720, 0x414;
-    int clearage : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x72c, 0x224;
+    int clearage : "PeggleWoW.exe", 0x002b9cfc, 0x864, 0x72c, 0x244;
     int levelsEnded : "PeggleWoW.exe", 0x002cbe04, 0x914, 0x198;
 }
 
@@ -291,40 +291,6 @@ init
         }
     });
 
-    vars.IsEndOfIL = (Func<bool>)(() =>
-    {
-        if (settings["ILModeFullClear"])
-        {
-            return current.clearage == 100;
-        }
-
-        if (settings["ILModeDeath"])
-        {
-            return true;
-        }
-
-        if (settings["ILModeClear"] || (settings["LPMode"] && (current.gameMode == 2)))
-        {
-            return current.orangePegsLeft == 0;
-        }
-
-        // We're in ILModeChallenge here
-        switch ((string)current.endDialogHeader)
-        
-        {
-            case "Results":
-                return (current.internalScore > current.opponentScore);
-            case "Level Passed!":
-            case "Level Done":
-            case "Try Again!":
-                return false; //
-            case "Way to Go!":
-                return true;
-            default:
-                return current.orangePegsLeft == 0;
-        }
-    });
-
     vars.IsVictory = (Func<string, bool>)(s => Array.IndexOf(vars.levelClearHeaders, s) >= 0);
 
     vars.ResetDisplay = (Action)(() =>
@@ -397,6 +363,10 @@ update
         if (settings["trackILTimes"])
         {
             vars.startOfIL = startTime;
+        }
+        if (settings["LPMode"])
+        {
+            vars.targetLevelsEnded = current.levelsEnded + 1;
         }
     }
 
@@ -492,7 +462,7 @@ split
             current.isEndOfNightsChallenge = (current.phaseTimer == old.phaseTimer);
             return (!old.isEndOfNightsChallenge && current.isEndOfNightsChallenge);
         }
-        
+
     }
     
     if (settings["ILMode"] || settings["LPMode"])
@@ -505,17 +475,47 @@ split
         {
             return true;
         }
-        return (current.boardState == 5)
-               && (old.internalScore == old.displayedScore)
-               && (current.phaseTimer > old.phaseTimer)
-               && vars.IsEndOfIL();
+        if ((current.boardState == 5)
+        && (old.internalScore == old.displayedScore)
+        && (current.phaseTimer > old.phaseTimer))
+        {
+            if (settings["ILModeFullClear"])
+            {
+                return current.clearage == 100;
+            }
+
+            if (settings["ILModeDeath"])
+            {
+                return true;
+            }
+
+            if (settings["ILModeClear"] || (settings["LPMode"] && (current.gameMode == 2)))
+            {
+                return current.orangePegsLeft == 0;
+            }
+
+            // We're in ILModeChallenge here
+            switch ((string)current.endDialogHeader)
+            {
+                case "Results":
+                    return (current.internalScore > current.opponentScore);
+                case "Level Passed!":
+                case "Level Done":
+                case "Try Again!":
+                    return false; //
+                case "Way to Go!":
+                    return true;
+                default:
+                    return current.orangePegsLeft == 0;
+            }
+        }
     }
 
     if(current.gameMode != 1)
     {
         return false;
     }
-    
+
     int levelDifference = current.levelSub - old.levelSub;
     switch (levelDifference)
     {
