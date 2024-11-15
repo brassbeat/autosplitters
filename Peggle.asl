@@ -224,7 +224,7 @@ startup
     settings.Add("trackFevorTimes", false, "Track FEVOR", "BonusSettings");
     settings.SetToolTip("trackFevorTimes", "Track time between start of fever and level end.");
 
-    settings.Add("specifyMaster", false, "Require this master", "BonusSettings");
+    settings.Add("specifyMaster", false, "Require this master to start", "BonusSettings");
     settings.SetToolTip("specifyMaster", "Only start the run with this master selected.");
     settings.Add("specifyBjorn",    false, "Bjorn",    "specifyMaster");
     settings.Add("specifyJimmy",    false, "Jimmy",    "specifyMaster");
