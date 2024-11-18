@@ -281,6 +281,7 @@ startup
 init
 {
     // LiveSplit display by @zment (from Defy Gravity auto-splitter)
+    // find a text component with left text `id` (or make a new one) and set its right text to `text`
     vars.SetTextComponent = (Action<string, string>)((id, text) =>
     {
         var textSettings = timer.Layout.Components.Where(x => x.GetType().Name == "TextComponent").Select(x => x.GetType().GetProperty("Settings").GetValue(x, null));
@@ -301,6 +302,7 @@ init
 
     // vars.DebugPrint = (Action<string>)((msg) => print("[Peggle ASL] " + msg));
 
+    // Set a duration from given `start` to now in a named text component `textComponentName`
     vars.SetAuxiliaryTimer = (Action<string, TimeSpan?>)((textComponentName, start) =>
     {
         const string NullILString = "-";
@@ -318,8 +320,11 @@ init
         }
     });
 
+    // For IL timing purposes, determine if the end-of-level dialog text
+    // corresponds to beating the level
     vars.IsVictory = (Func<string, bool>)(s => Array.IndexOf(vars.levelClearHeaders, s) >= 0);
 
+    // If splitting per stage, splits for levels 1 to 4 are suppressed
     vars.CheckStageSplit = (Func<bool>)(() =>
     {
         if (!settings["splitPerStage"])
@@ -336,6 +341,7 @@ init
         return false;
     });
 
+    // reset auxiliary displays at the start of the run...
     vars.ResetDisplay = (Action)(() =>
     {
         vars.retryCounter = 0;
@@ -359,8 +365,10 @@ init
         }
     });
 
+    // ... and upon initialisation
     vars.ResetDisplay();
 
+    // find the correct game version
     foreach (string versionName in vars.versions)
     {
         var gameModules = modules.Where(m => m.ModuleName == vars.targetNames[versionName]);
@@ -374,11 +382,20 @@ init
             }
         }
     }
+
+    // The logic for deluxe/nights base diverges at some points
+    vars.isDeluxeBaseVersion = Array.IndexOf(vars.deluxeBaseVersions, version) >= 0;
 }
 
 update
 {
-    if (!(settings["trackILTimes"] || settings["trackRetries"] || settings["trackFevorTimes"]))
+    bool updatesAreNeeded = (
+        settings["trackILTimes"]
+        || settings["trackRetries"]
+        || settings["trackFevorTimes"]
+        || settings["LPMode"]
+    );
+    if (!updatesAreNeeded)
     {
         return true;
     }
@@ -391,7 +408,8 @@ update
         TimeSpan? startTime = timer.CurrentTime.RealTime;
         // vars.DebugPrint("Found start of level @ " + startTime.ToString());
 
-        if (vars.startOfIL != null) //restarted level
+        // update retry counter upon a restart
+        if (vars.startOfIL != null)
         {
             TimeSpan retryTime = startTime - vars.startOfIL;
             // vars.DebugPrint("found retry time " + retryTime.ToString());
@@ -403,10 +421,14 @@ update
                 vars.SetTextComponent("Retries", vars.retryCounter.ToString());
             }
         }
+
+        // start auxiliary IL timer
         if (settings["trackILTimes"])
         {
             vars.startOfIL = startTime;
         }
+
+        // need to update this after a death
         if (settings["LPMode"])
         {
             vars.targetLevelsEnded = current.levelsEnded + 1;
@@ -419,7 +441,7 @@ update
         vars.startOfFevor = timer.CurrentTime.RealTime;
     }
 
-    // end IL
+    // end IL and FEVOR
     if (((vars.startOfIL != null) || (vars.startOfFevor != null))
         && (current.boardState == 5)
         && (old.internalScore == old.displayedScore)
@@ -448,6 +470,8 @@ update
 onStart
 {
     vars.ResetDisplay();
+
+    // not sure if this is needed but I'm not gonna test this again.
     if (settings["LPMode"])
     {
         vars.targetLevelsEnded = current.levelsEnded + 1;
@@ -462,6 +486,8 @@ onStart
 
 start
 {
+    // check if the correct master is selected if specified,
+    // else suppress start
     if (settings["specifyMaster"])
     {
         bool[] allowedMasters = {
@@ -483,16 +509,19 @@ start
         }
     }
 
+    // start for ILs and level packs
     if (settings["ILMode"] || settings["LPMode"])
     {
         return (current.boardState == 8)
                && ((old.boardState != 8) || (current.levelTimer == 0));
     }
-    if (Array.IndexOf(vars.deluxeBaseVersions, version) >= 0)
+
+    // start for deluxe Adventure
+    if (vars.isDeluxeBaseVersion)
     {
         return (current.song == 49) && (old.song != 49) && (current.gameMode == 1);
     }
-    else
+    else // start for nights Adventure
     {
         return (current.mainMenuBase == 0) && (old.mainMenuBase != 0) && (current.gameMode == 1);
     }
@@ -500,6 +529,7 @@ start
 
 reset
 {
+    // In IL mode, reset for restarting the level.
     if (!settings["ILMode"])
     {
         return false;
@@ -509,6 +539,7 @@ reset
 
 onSplit
 {
+    // this is needed to prevent double-splitting in level pack mode
     if (settings["LPMode"])
     {
         vars.targetLevelsEnded = current.levelsEnded + 1;
@@ -517,7 +548,8 @@ onSplit
 
 split
 {
-    if (settings["ILModeChallenge"] || (settings["LPMode"] && (current.gameMode == 4)))
+    // Handle nights challenges
+    if (!vars.isDeluxeBaseVersion && (settings["ILModeChallenge"] || (settings["LPMode"] && (current.gameMode == 4))))
     {
 
         if (vars.isEndOfNightsChallenge && (current.levelBase < old.levelBase))
@@ -536,34 +568,42 @@ split
 
     if (settings["ILMode"] || settings["LPMode"])
     {
+        // part of checking against double-splitting.
         if (settings["LPMode"] && (current.levelsEnded != vars.targetLevelsEnded))
         {
             return false;
         }
+        // level transitions in multilevel challenges
         if (settings["MultilevelSubsplits"] && (current.multilevelIndex > old.multilevelIndex))
         {
             return true;
         }
+
+        // check for end-of-level before handling other cases
         if ((current.boardState == 5)
         && (old.internalScore == old.displayedScore)
         && (current.phaseTimer > old.phaseTimer))
         {
+            // full clear ILs
             if (settings["ILModeFullClear"])
             {
                 return (current.clearage == 100) && vars.CheckStageSplit();
             }
 
+            // death%
+            // I'm kinda not checking if it is actually a death but it shouldn't matter
             if (settings["ILModeDeath"])
             {
                 return vars.CheckStageSplit();
             }
 
+            // any% ILs and level pack quick play
             if (settings["ILModeClear"] || (settings["LPMode"] && (current.gameMode == 2)))
             {
                 return (current.orangePegsLeft == 0) && vars.CheckStageSplit();
             }
 
-            // We're in ILModeChallenge here
+            // Challenge ILs in Deluxe
             switch ((string)current.endDialogHeader)
             {
                 case "Results":
@@ -580,10 +620,32 @@ split
         }
     }
 
-    if(current.gameMode != 1)
+    // at this point we're assumed to be in RTA mode.
+    if (current.gameMode != 1)
     {
         return false;
     }
 
-    return vars.CheckStageSplit();
+    int levelDifference = current.levelSub - old.levelSub;
+    switch (levelDifference)
+    {
+        case -5:
+            // level x-5 -> introduction screen.
+             if ((current.levelSub == 0) && (current.mainMenuBase == 0))
+             {
+                 return vars.CheckStageSplit();
+             }
+
+             return false;
+        case 1:
+            // intro -> x-1 or next level.
+            if (old.levelSub != 0)
+            {
+                return vars.CheckStageSplit();
+            }
+
+            return false;
+        default:
+            return false;
+    }
 }
