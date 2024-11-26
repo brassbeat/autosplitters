@@ -450,11 +450,7 @@ update
         bool isVictory = vars.IsVictory(old.endDialogHeader);
         // vars.DebugPrint("isVictory: " + isVictory.ToString());
 
-        if (!isVictory)
-        {
-            return true;
-        }
-        if (settings["trackILTimes"])
+        if (settings["trackILTimes"] && isVictory)
         {
             vars.SetAuxiliaryTimer("Last IL Time", vars.startOfIL);
             vars.startOfIL = null;
