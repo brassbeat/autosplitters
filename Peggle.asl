@@ -554,10 +554,12 @@ split
             return true;
         }
 
-        if ((current.boardState == 5) && (old.internalScore == old.displayedScore))
+        if ((current.boardState == 5)
+            && (old.internalScore == old.displayedScore)
+            && (current.endDialogHeader == "Way to Go!"))
         {
-            current.isEndOfNightsChallenge = (current.phaseTimer == old.phaseTimer);
-            return (!old.isEndOfNightsChallenge && current.isEndOfNightsChallenge);
+            vars.isEndOfNightsChallenge = true;
+            return false;
         }
 
     }
